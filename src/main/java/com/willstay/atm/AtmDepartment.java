@@ -12,7 +12,7 @@ public class AtmDepartment {
         this.atmList = atmList;
     }
 
-    public List<BankNote> getAll() {
+    public List<BankNote> getAllBankNotes() {
         List<BankNote> bankNoteList = new ArrayList<>();
         for (Atm atm : atmList) {
             bankNoteList.addAll(atm.getAllBankNotes());
@@ -24,6 +24,14 @@ public class AtmDepartment {
         for (Atm atm : atmList) {
             atm.setContainersValueToDefault();
         }
+    }
+
+    public int getAllBalance() {
+        int balance = 0;
+        for (Atm atm : atmList) {
+            balance += atm.getATMBalance();
+        }
+        return balance;
     }
 
 }

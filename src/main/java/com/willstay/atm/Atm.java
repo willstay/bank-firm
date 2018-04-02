@@ -1,67 +1,58 @@
 package com.willstay.atm;
 
 import com.willstay.banknote.BankNote;
-import com.willstay.banknotecontainer.BankNoteContainer;
+import com.willstay.banknotecontainer.BankNoteCell;
+import com.willstay.getbanknotesstrategy.GetBankNotesStrategy;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Atm {
-    private final Map<Integer, BankNoteContainer> containerTreeMap = new TreeMap<>(Collections.reverseOrder());
-    //private final Map<Integer, BankNoteContainer> defaultContainerTreeMap = new TreeMap<>(Collections.reverseOrder());
+    private final TreeMap<Integer, BankNoteCell> nominalCellTreeMap = new TreeMap<>();
+    //private final TreeMap<Integer, BankNoteCell> defaultNominalCellTreeMap = new TreeMap<>();
     private final List<BankNote> defaultContainerList;
 
     public Atm(List<BankNote> defaultContainerList) {
         this.defaultContainerList = defaultContainerList;
-        addBankNotes(defaultContainerList, containerTreeMap);
+        addBankNotes(defaultContainerList, nominalCellTreeMap);
         // addBankNotes(defaultContainerList, defaultContainerTreeMap);
     }
 
     public void setContainersValueToDefault() {
-        containerTreeMap.clear();
-        addBankNotes(defaultContainerList, containerTreeMap);
-        //containerTreeMap.putAll(defaultContainerTreeMap);
+        nominalCellTreeMap.clear();
+        addBankNotes(defaultContainerList, nominalCellTreeMap);
+        //nominalCellTreeMap.putAll(defaultContainerTreeMap);
     }
 
     public void addBankNotes(List<BankNote> bankNoteList) {
-        addBankNotes(bankNoteList, containerTreeMap);
+        addBankNotes(bankNoteList, nominalCellTreeMap);
     }
 
-    private void addBankNotes(List<BankNote> bankNoteList, Map<Integer, BankNoteContainer> containerTreeMap) {
+    private void addBankNotes(List<BankNote> bankNoteList, Map<Integer, BankNoteCell> containerTreeMap) {
         for (BankNote bankNote : bankNoteList) {
             if (containerTreeMap.containsKey(bankNote.getValue())) {
                 containerTreeMap.get(bankNote.getValue()).addBankNote(bankNote);
             } else {
-                BankNoteContainer bankNoteContainer = new BankNoteContainer();
-                bankNoteContainer.addBankNote(bankNote);
-                containerTreeMap.put(bankNote.getValue(), bankNoteContainer);
+                BankNoteCell bankNoteCell = new BankNoteCell();
+                bankNoteCell.addBankNote(bankNote);
+                containerTreeMap.put(bankNote.getValue(), bankNoteCell);
             }
         }
     }
 
-    public List<BankNote> getBankNotes(int money) {
-        List<BankNote> bankNotes = new ArrayList<>();
-        for (Integer nominal : containerTreeMap.keySet()) {
-            while (nominal <= money && !containerTreeMap.get(nominal).empty()) {
-                bankNotes.add(containerTreeMap.get(nominal).getBankNote());
-                money -= nominal;
-                if (money == 0) {
-                    return bankNotes;
-                }
-            }
-        }
-        throw new NoMoneyException();
+    public List<BankNote> getBankNotes(GetBankNotesStrategy getBankNotesStrategy, int money) {
+        return getBankNotesStrategy.getBankNotes(money, nominalCellTreeMap);
     }
 
     public List<BankNote> getAllBankNotes() {
         List<BankNote> bankNoteList = new ArrayList<>();
-        containerTreeMap.values().stream()
-                .forEach(bankNoteContainer -> {
-                    while (!bankNoteContainer.empty()) {
-                        bankNoteList.add(bankNoteContainer.getBankNote());
+        nominalCellTreeMap.values().stream()
+                .forEach(bankNoteCell -> {
+                    while (!bankNoteCell.empty()) {
+                        bankNoteList.add(bankNoteCell.getBankNote());
                     }
                 });
-//        for(BankNoteContainer bankNoteContainer : containerTreeMap.values()){
+//        for(BankNoteCell bankNoteContainer : nominalCellTreeMap.values()){
 //            while (!bankNoteContainer.empty()){
 //                bankNoteList.add(bankNoteContainer.getBankNote());
 //            }
@@ -71,9 +62,9 @@ public class Atm {
 
     public int getATMBalance() {
         int balance = 0;
-        List<Integer> allMoneyList = containerTreeMap.values().stream()
-                .flatMap(bankNoteContainer -> bankNoteContainer.readBankNotes().stream())
-                .map(bankNote -> bankNote.getValue())
+        List<Integer> allMoneyList = nominalCellTreeMap.values().stream()
+                .flatMap(bankNoteCell -> bankNoteCell.readBankNotes().stream())
+                .map(BankNote::getValue)
                 .collect(Collectors.toList());
         for (Integer money : allMoneyList) {
             balance += money;

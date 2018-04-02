@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-public class BankNoteContainer {
+public class BankNoteCell {
     private final Stack<BankNote> bankNoteStack = new Stack<>();
 
     public void addBankNote(BankNote bankNote) {
